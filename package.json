@@ -1,0 +1,14 @@
+{
+  "name": "talia-online",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Talia Online - high-rate browser MMO prototype",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "ws": "^8.18.0"
+  }
+}
