@@ -1,21 +1,44 @@
-# Talia Online V2
+# Talia Online V3
 
-A new original browser MMORPG project inspired by classic 2D online RPG gameplay. It does not include proprietary Conquer Online assets, code, maps, sprites, sounds, or text.
+Original browser MMORPG foundation inspired by the *classic 2D MMORPG* experience and designed around a 5065-era server architecture.
+
+## What V3 adds
+
+- Browser client + WebSocket multiplayer server
+- Five connected world maps: Twin City, Phoenix Castle, Desert City, Bird Island, Ape Mountain
+- Original NPC system: shops, teleports, trainer, quests
+- Four classes: Warrior, Trojan, Archer, Taoist
+- Levels, EXP, HP, Mana, Gold, CP
+- Normal attacks and class skills
+- Monster AI, respawns, bosses, drops
+- Inventory, equipment and consumables
+- Quests and quest progress
+- Chat and multiplayer player visibility
+- GM account (`AbuTalia`) with max/reward, boss spawn and announcement commands
+- JSON persistence for accounts/characters
+- `/health` and `/api/world` endpoints
+- Docker/Back4App ready
+- Mobile touch controls + keyboard/mouse
 
 ## Run
+
+```bash
 npm install
 npm start
+```
 
-Open http://localhost:10000
+Open `http://localhost:10000`.
 
-## Deploy
-Designed for Back4App Containers / any Docker-compatible Node host.
+## Important
 
-Environment: PORT is provided by the host. The server binds to 0.0.0.0.
+This project does **not** include Conquer Online/TQ Digital's proprietary client, sprites, maps, sounds, text, or other copyrighted assets. The client visuals in this repository are original procedural drawings and UI. The project can use public interoperability documentation as a technical reference; it does not bundle proprietary client assets.
 
-## Demo GM
-Character name: AbuTalia
+## Technical references
 
-The V2 prototype includes: mobile touch controls, desktop keyboard controls, multiple maps, world landmarks, original vector-style characters/monsters, combat, EXP, leveling, gold/CP rewards, drops, inventory, chat, map travel, NPC-like world interaction foundation, and GM tools.
+The Conquer Online community GitHub organization publishes public server/client-development documentation and projects. Redux documents a 5065-era server architecture, while the community wiki documents packet types, cryptography, client file formats, constants, and system overviews. See:
 
-This is an original implementation, not a distribution of Conquer Online's proprietary client/assets.
+- https://github.com/conquer-online/redux
+- https://github.com/conquer-online/wiki
+- https://github.com/conquer-online/cops-protocols-doc
+
+Before redistributing third-party source code, verify and preserve the applicable license. This repository itself contains only original Talia Online code.
