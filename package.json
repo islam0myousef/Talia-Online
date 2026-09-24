@@ -1,14 +1,9 @@
 {
-  "name": "talia-online",
-  "version": "1.0.0",
+  "name": "talia-online-v2",
+  "version": "2.0.0",
   "private": true,
-  "description": "Talia Online - high-rate browser MMO prototype",
+  "description": "Talia Online - original classic 2D MMORPG inspired by classic online RPGs",
   "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  },
-  "dependencies": {
-    "express": "^4.21.2",
-    "ws": "^8.18.0"
-  }
+  "scripts": {"start":"node server.js"},
+  "dependencies": {"express":"^4.21.2","ws":"^8.18.0"}
 }
