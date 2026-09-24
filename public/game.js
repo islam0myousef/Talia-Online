@@ -1,145 +1,28 @@
-const canvas = document.getElementById("world");
-const ctx = canvas.getContext("2d");
-const ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host);
-
-let me = null;
-let state = {world:{width:2400,height:1400},players:[],monsters:[],config:{}};
-let keys = {};
-let camera = {x:0,y:0};
-
-function fit() {
-  const dpr = Math.min(devicePixelRatio || 1, 2);
-  canvas.width = innerWidth * dpr;
-  canvas.height = innerHeight * dpr;
-  canvas.style.width = innerWidth + "px";
-  canvas.style.height = innerHeight + "px";
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-}
-addEventListener("resize", fit); fit();
-
-function send(x){ if(ws.readyState===1) ws.send(JSON.stringify(x)); }
-
-document.getElementById("play").onclick = () => {
-  send({type:"login", name:document.getElementById("name").value, password:document.getElementById("password").value});
-};
-
-ws.onmessage = e => {
-  const m = JSON.parse(e.data);
-  if(m.type === "state") {
-    state = m;
-    if(me) {
-      const p = state.players.find(x=>x.id===me.id);
-      if(p) me = {...me,...p};
-      updateHUD();
-    }
-  }
-  if(m.type === "login_ok") {
-    me = m.player;
-    document.getElementById("login").classList.add("hidden");
-    document.getElementById("game").classList.remove("hidden");
-    if(me.role === "GM") document.getElementById("gmBtn").classList.remove("hidden");
-    updateHUD();
-  }
-  if(m.type === "drops") showDrops(m.drops);
-  if(m.type === "gm_saved") state.config = m.config;
-  if(m.type === "notice") showDrops([m.text]);
-};
-
-function updateHUD(){
-  if(!me) return;
-  heroName.textContent = me.name;
-  level.textContent = me.level;
-  gold.textContent = Number(me.gold).toLocaleString();
-  cps.textContent = Number(me.cps).toLocaleString();
-}
-
-function showDrops(arr){
-  const box = document.getElementById("drops");
-  arr.forEach(t=>{
-    const d=document.createElement("div");
-    d.className="drop";
-    d.textContent=t;
-    box.appendChild(d);
-    setTimeout(()=>d.remove(),2500);
-  });
-}
-
-function move(dx,dy){
-  if(!me) return;
-  const p=state.players.find(x=>x.id===me.id);
-  if(!p)return;
-  send({type:"move",x:p.x+dx,y:p.y+dy});
-}
-
-document.querySelectorAll("#controls button").forEach(b=>{
-  b.addEventListener("click",()=>{
-    const d=b.dataset.dir;
-    if(d==="up")move(0,-70);
-    if(d==="down")move(0,70);
-    if(d==="left")move(-70,0);
-    if(d==="right")move(70,0);
-  });
-});
-
-canvas.addEventListener("click", e=>{
-  if(!me)return;
-  const p=state.players.find(x=>x.id===me.id);
-  if(!p)return;
-  const mx=e.clientX+camera.x, my=e.clientY+camera.y;
-  let nearest=null, dist=999999;
-  for(const m of state.monsters){
-    const dd=Math.hypot(m.x-mx,m.y-my);
-    if(dd<dist){dist=dd;nearest=m;}
-  }
-  if(nearest && dist<90) send({type:"attack",monsterId:nearest.id});
-});
-
-function draw(){
-  requestAnimationFrame(draw);
-  if(!me)return;
-  const p=state.players.find(x=>x.id===me.id);
-  if(!p)return;
-
-  camera.x = Math.max(0, Math.min(state.world.width-innerWidth, p.x-innerWidth/2));
-  camera.y = Math.max(0, Math.min(state.world.height-innerHeight, p.y-innerHeight/2));
-
-  ctx.clearRect(0,0,innerWidth,innerHeight);
-  ctx.save(); ctx.translate(-camera.x,-camera.y);
-
-  // Ground
-  ctx.fillStyle="#1d3525"; ctx.fillRect(0,0,state.world.width,state.world.height);
-  ctx.strokeStyle="#274733";
-  for(let x=0;x<state.world.width;x+=80){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,state.world.height);ctx.stroke()}
-  for(let y=0;y<state.world.height;y+=80){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(state.world.width,y);ctx.stroke()}
-
-  // Monsters
-  for(const m of state.monsters){
-    ctx.fillStyle="#b83b3b"; ctx.beginPath();ctx.arc(m.x,m.y,24,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle="#fff";ctx.font="12px Arial";ctx.textAlign="center";ctx.fillText(m.name,m.x,m.y-32);
-    ctx.fillStyle="#111";ctx.fillRect(m.x-25,m.y+30,50,5);
-    ctx.fillStyle="#42d16d";ctx.fillRect(m.x-25,m.y+30,50*(m.hp/m.maxHp),5);
-  }
-
-  // Players
-  for(const q of state.players){
-    ctx.fillStyle=q.id===me.id?"#4db3ff":"#f0c04a";
-    ctx.beginPath();ctx.arc(q.x,q.y,20,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle="#fff";ctx.font="13px Arial";ctx.textAlign="center";ctx.fillText(q.name,q.x,q.y-30);
-  }
-  ctx.restore();
-}
-draw();
-
-document.getElementById("gmBtn").onclick=()=>{
-  gmPanel.classList.remove("hidden");
-  const c=state.config;
-  for(const k of ["goldMin","goldMax","cpsMin","cpsMax","meteorRate","dragonBallRate","rareItemRate"])
-    document.getElementById(k).value=c[k];
-};
-document.getElementById("closeGM").onclick=()=>gmPanel.classList.add("hidden");
-document.getElementById("saveConfig").onclick=()=>{
-  const c={};
-  for(const k of ["goldMin","goldMax","cpsMin","cpsMax","meteorRate","dragonBallRate","rareItemRate"])
-    c[k]=Number(document.getElementById(k).value);
-  send({type:"gm_config",config:c});
-};
+const canvas=document.getElementById('world'),ctx=canvas.getContext('2d');let W,H,ws,me=null,others=new Map(),drops=new Map(),keys={},panelOpen=false,target=null,monsters=[];
+const mapInfo={twin_city:{name:'Azure City',ground:'#244b36'},phoenix:{name:'Ember Fields',ground:'#4a3b27'},desert:{name:'Golden Desert',ground:'#6c5730'},ape:{name:'Jade Mountains',ground:'#27463c'},island:{name:'Moon Bird Island',ground:'#304c55'}};
+function resize(){W=canvas.width=innerWidth*devicePixelRatio;H=canvas.height=innerHeight*devicePixelRatio;canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0)}addEventListener('resize',resize);resize();
+function send(x){if(ws?.readyState===1)ws.send(JSON.stringify(x))}function toast(t){const e=document.getElementById('toast');e.textContent=t;e.style.opacity=1;clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.opacity=0,1800)}
+function connect(){ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host);ws.onopen=()=>send({type:'login',name:document.getElementById('name').value,classId:document.getElementById('class').value});ws.onmessage=e=>handle(JSON.parse(e.data));ws.onclose=()=>toast('Connection lost - refreshing...')}
+function handle(m){if(m.type==='state'){me=m.player;others.clear();m.players.forEach(p=>others.set(p.pid,p));m.drops.forEach(d=>drops.set(d.id,d));enter()}else if(m.type==='player_join'){if(m.player.pid!==me.pid&&m.player.mapId===me.mapId)others.set(m.player.pid,m.player)}else if(m.type==='player_leave'){others.delete(m.pid)}else if(m.type==='player_move'){if(m.player.pid===me.pid){me={...me,...m.player}}else if(m.player.mapId===me.mapId)others.set(m.player.pid,m.player);else others.delete(m.player.pid)}else if(m.type==='map_changed'){me={...me,...m.player};others.clear();drops.clear();m.drops.forEach(d=>drops.set(d.id,d));toast('Entered '+mapInfo[me.mapId].name)}else if(m.type==='combat_result'){me={...me,...m.player};m.drops.forEach(d=>drops.set(d.id,d));toast(`Hit for ${m.damage} damage • +Gold/EXP`);target=null}else if(m.type==='picked'){me={...me,...m.player};drops.delete(m.dropId);toast('Item picked up')}else if(m.type==='drop_removed'){drops.delete(m.dropId)}else if(m.type==='chat')addChat(m.name,m.message);else if(m.type==='system')addChat('SYSTEM',m.message);else if(m.type==='state_patch'){me={...me,...m.player};toast('GM rewards applied')}else if(m.type==='gm_notice')toast(m.message)}
+function enter(){document.getElementById('login').classList.add('hidden');document.getElementById('game').classList.remove('hidden');document.getElementById('pname').textContent=me.name;document.getElementById('gm').classList.toggle('hidden',me.name!=='AbuTalia');addChat('SYSTEM','Welcome to Talia Online V2');requestAnimationFrame(loop)}
+function addChat(n,m){const c=document.getElementById('chat'),d=document.createElement('div');d.innerHTML=`<b>${esc(n)}:</b> ${esc(m)}`;c.appendChild(d);while(c.children.length>8)c.firstChild.remove();c.scrollTop=c.scrollHeight}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function worldToScreen(x,y){const scale=Math.min(innerWidth/1000,innerHeight/650);return [innerWidth/2+(x-me.x)*scale,innerHeight/2+(y-me.y)*scale]}
+function draw(){ctx.clearRect(0,0,innerWidth,innerHeight);const inf=mapInfo[me.mapId]||mapInfo.twin_city;ctx.fillStyle=inf.ground;ctx.fillRect(0,0,innerWidth,innerHeight);
+  const scale=Math.min(innerWidth/1000,innerHeight/650), step=70;ctx.strokeStyle='rgba(120,160,130,.16)';ctx.lineWidth=1;for(let x=-innerWidth;x<innerWidth*2;x+=step){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,innerHeight);ctx.stroke()}for(let y=0;y<innerHeight;y+=step){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(innerWidth,y);ctx.stroke()}
+  drawLandmarks(inf,scale);if(!monsters.length||Math.random()<.01)makeMonsters();for(const m of monsters){if(m.mapId!==me.mapId)continue;const [sx,sy]=worldToScreen(m.x,m.y);drawMonster(sx,sy,m)}
+  for(const d of drops.values()){if(d.mapId!==me.mapId)continue;const [sx,sy]=worldToScreen(d.x,d.y);drawDrop(sx,sy,d)}
+  for(const p of others.values()){const [sx,sy]=worldToScreen(p.x,p.y);drawPlayer(sx,sy,p,false)}drawPlayer(innerWidth/2,innerHeight/2,me,true);updateUI();}
+function drawLandmarks(inf,scale){ctx.fillStyle='rgba(230,205,130,.18)';ctx.fillRect(innerWidth/2-140,innerHeight/2-90,280,180);ctx.fillStyle='#d8c18a';ctx.font='bold 16px Arial';ctx.textAlign='center';ctx.fillText(inf.name,innerWidth/2,innerHeight/2-110);ctx.fillStyle='#73563e';ctx.fillRect(innerWidth/2-45,innerHeight/2-30,90,60);ctx.fillStyle='#8b6b47';ctx.fillRect(innerWidth/2-30,innerHeight/2-70,60,40);ctx.fillStyle='#d7c27e';ctx.font='12px Arial';ctx.fillText('Central Plaza',innerWidth/2,innerHeight/2+105)}
+function drawPlayer(x,y,p,self){ctx.save();ctx.translate(x,y);ctx.fillStyle=self?'#49aaf0':'#d7a94d';ctx.beginPath();ctx.arc(0,0,19,0,Math.PI*2);ctx.fill();ctx.fillStyle='#e8d4ad';ctx.beginPath();ctx.arc(0,-18,11,0,Math.PI*2);ctx.fill();ctx.fillStyle='#5d321e';ctx.fillRect(-12,-29,24,6);ctx.fillStyle='#111';ctx.font='12px Arial';ctx.textAlign='center';ctx.fillText(p.name,0,-38);ctx.fillStyle='#e33d45';ctx.fillRect(-22,25,44,5);ctx.fillStyle='#43d66d';ctx.fillRect(-22,25,44*(p.hp/(p.maxHp||100)),5);ctx.restore()}
+function drawMonster(x,y,m){ctx.save();ctx.translate(x,y);ctx.fillStyle=m.kind==='boss'?'#9b3cc5':'#c33f43';ctx.beginPath();ctx.arc(0,0,m.kind==='boss'?25:18,0,Math.PI*2);ctx.fill();ctx.fillStyle='#44d76c';ctx.fillRect(-24,25,48,5);ctx.fillStyle='#fff';ctx.font='11px Arial';ctx.textAlign='center';ctx.fillText(m.name,0,-30);ctx.restore()}
+function drawDrop(x,y,d){ctx.save();ctx.translate(x,y);ctx.fillStyle=d.type==='dragonball'?'#e2a93d':d.type==='weapon'?'#70d5f5':'#c3c3d0';ctx.beginPath();ctx.arc(0,0,8,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.font='9px Arial';ctx.textAlign='center';ctx.fillText(d.label,0,18);ctx.restore()}
+function makeMonsters(){const names=['Azure Bandit','Wild Wolf','Flame Beast','Sand Raider','Jade Ape','Moon Bird'];monsters=[];for(let i=0;i<25;i++){const ids=Object.keys(mapInfo);const mapId=ids[i%ids.length];monsters.push({id:'m'+i,mapId,name:names[i%names.length],kind:i%12===0?'boss':'normal',x:100+Math.random()*2200,y:120+Math.random()*1400})}}
+function updateUI(){document.getElementById('level').textContent=me.level;document.getElementById('gold').textContent=Number(me.gold).toLocaleString();document.getElementById('cp').textContent=Number(me.cp).toLocaleString();document.getElementById('pclass').textContent=me.classId;document.getElementById('hpbar').style.width=(me.hp/me.maxHp*100)+'%';document.getElementById('xpbar').style.width=(me.exp)+'%'}
+function loop(){if(!me)return;draw();requestAnimationFrame(loop)}
+function move(dx,dy){const step=55;me.x+=dx*step;me.y+=dy*step;send({type:'move',x:me.x,y:me.y,dir:Math.atan2(dy,dx)});}
+document.getElementById('play').onclick=connect;document.querySelectorAll('[data-dir]').forEach(b=>b.onclick=()=>({up:move(0,-1),down:move(0,1),left:move(-1,0),right:move(1,0)}[b.dataset.dir]));document.getElementById('attack').onclick=()=>send({type:'attack'});document.getElementById('skill').onclick=()=>{send({type:'attack'});toast('Skill cast')};document.getElementById('pickup').onclick=()=>{let best=null,dist=1e9;for(const d of drops.values())if(d.mapId===me.mapId){const z=Math.hypot(d.x-me.x,d.y-me.y);if(z<dist){dist=z;best=d}}if(best&&dist<220)send({type:'pickup',id:best.id});else toast('No item nearby')};document.getElementById('jump').onclick=()=>toast('Jump');
+document.querySelectorAll('[data-panel]').forEach(b=>b.onclick=()=>openPanel(b.dataset.panel));function openPanel(kind){const p=document.getElementById('panel');p.classList.remove('hidden');let html='';if(kind==='inventory')html='<h3>🎒 Inventory</h3>'+((me.inventory||[]).map(i=>`<div class="item">${esc(i.label)}</div>`).join('')||'<div class="worldhint">Empty</div>');if(kind==='character')html=`<h3>👤 Character</h3><div class="item">Name: ${esc(me.name)}</div><div class="item">Level: ${me.level}</div><div class="item">Class: ${me.classId}</div><div class="item">HP: ${me.hp}/${me.maxHp}</div>`;if(kind==='skills')html='<h3>✨ Skills</h3><div class="item">Basic Attack — Lv 1</div><div class="item">Power Strike — Lv 20</div><div class="item">Whirlwind — Lv 40</div><div class="item">Dragon Fury — Lv 80</div>';if(kind==='quests')html='<h3>📜 Quests</h3><div class="item">Welcome to Azure City — Complete</div><div class="item">Defeat 10 Azure Bandits — 0/10</div><div class="item">Visit the Desert — Locked</div>';if(kind==='map')html='<h3>🗺️ World Map</h3>'+Object.entries(mapInfo).map(([id,x])=>`<button style="width:100%;padding:10px;margin:4px 0" onclick="travel('${id}')">${x.name}</button>`).join('');p.innerHTML=html}
+window.travel=id=>{send({type:'map',mapId:id});document.getElementById('panel').classList.add('hidden')};document.getElementById('sendChat').onclick=sendMsg;document.getElementById('chatInput').addEventListener('keydown',e=>{if(e.key==='Enter')sendMsg()});function sendMsg(){const i=document.getElementById('chatInput');if(i.value.trim())send({type:'chat',message:i.value});i.value=''}
+document.getElementById('gm').onclick=()=>document.getElementById('gmPanel').classList.remove('hidden');document.getElementById('closeGM').onclick=()=>document.getElementById('gmPanel').classList.add('hidden');document.querySelectorAll('[data-gm]').forEach(b=>b.onclick=()=>send({type:'gm',action:b.dataset.gm}));document.getElementById('announceBtn').onclick=()=>{send({type:'gm',action:'announce',message:document.getElementById('announce').value});document.getElementById('announce').value=''};
+addEventListener('keydown',e=>{if(e.key==='ArrowUp')move(0,-1);if(e.key==='ArrowDown')move(0,1);if(e.key==='ArrowLeft')move(-1,0);if(e.key==='ArrowRight')move(1,0);if(e.key===' ')send({type:'attack'})});

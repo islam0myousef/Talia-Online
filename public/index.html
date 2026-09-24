@@ -1,60 +1,10 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Talia Online</title>
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
-<div id="login">
-  <div class="panel">
-    <h1>⚔️ Talia Online</h1>
-    <p>High-Rate Browser MMO</p>
-    <input id="name" placeholder="Character name" maxlength="16" value="AbuTalia">
-    <input id="password" type="password" placeholder="Password">
-    <button id="play">PLAY</button>
-    <small>GM test account: AbuTalia / CHANGE_ME</small>
-  </div>
-</div>
-
-<div id="game" class="hidden">
-  <div id="hud">
-    <b id="heroName">Player</b>
-    <span>Lv <b id="level">1</b></span>
-    <span>💰 <b id="gold">0</b></span>
-    <span>🟣 <b id="cps">0</b></span>
-    <button id="gmBtn" class="hidden">👑 GM</button>
-  </div>
-
-  <canvas id="world"></canvas>
-
-  <div id="drops"></div>
-  <div id="controls">
-    <button data-dir="up">▲</button>
-    <div>
-      <button data-dir="left">◀</button>
-      <button data-dir="down">▼</button>
-      <button data-dir="right">▶</button>
-    </div>
-  </div>
-</div>
-
-<div id="gmPanel" class="modal hidden">
-  <div class="panel gm">
-    <h2>👑 GM Panel</h2>
-    <label>Gold Min <input id="goldMin" type="number"></label>
-    <label>Gold Max <input id="goldMax" type="number"></label>
-    <label>CP Min <input id="cpsMin" type="number"></label>
-    <label>CP Max <input id="cpsMax" type="number"></label>
-    <label>Meteor Rate <input id="meteorRate" type="number" step="0.01"></label>
-    <label>DragonBall Rate <input id="dragonBallRate" type="number" step="0.01"></label>
-    <label>Rare Item Rate <input id="rareItemRate" type="number" step="0.01"></label>
-    <button id="saveConfig">SAVE DROP SETTINGS</button>
-    <button id="closeGM">CLOSE</button>
-  </div>
-</div>
-
-<script src="game.js"></script>
-</body>
-</html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>Talia Online V2</title><link rel="stylesheet" href="style.css"></head><body>
+<div id="login" class="screen"><div class="loginbox"><div class="logo">TALIA <span>ONLINE</span></div><p>Classic 2D MMORPG</p><input id="name" maxlength="18" value="AbuTalia" placeholder="Character name"><select id="class"><option value="warrior">Warrior</option><option value="trojan">Trojan</option><option value="archer">Archer</option><option value="taoist">Taoist</option></select><button id="play">ENTER WORLD</button><small>Original game project inspired by classic MMORPG design.</small></div></div>
+<div id="game" class="hidden"><canvas id="world"></canvas><div class="topbar"><div class="avatar"><b id="pname">AbuTalia</b><span id="pclass">Warrior</span></div><div class="bars"><div class="hp"><i id="hpbar"></i></div><div class="xp"><i id="xpbar"></i></div></div><div class="stats"><span>Lv <b id="level">1</b></span><span>🪙 <b id="gold">0</b></span><span>💎 <b id="cp">0</b></span></div><button id="gm" class="gm hidden">♛ GM</button></div>
+<div id="target" class="target hidden"><b id="targetName">Azure Bandit</b><div><i></i></div></div>
+<div class="side"><button data-panel="inventory">🎒</button><button data-panel="character">👤</button><button data-panel="skills">✨</button><button data-panel="quests">📜</button><button data-panel="map">🗺️</button></div>
+<div id="panel" class="panel hidden"></div><div id="chat" class="chat"></div><div class="chatbar"><input id="chatInput" placeholder="Chat..."><button id="sendChat">➤</button></div>
+<div class="controls"><button data-dir="up">▲</button><div><button data-dir="left">◀</button><button data-dir="down">▼</button><button data-dir="right">▶</button></div></div>
+<div class="actionbar"><button id="attack">⚔️<small>Attack</small></button><button id="skill">🔥<small>Skill</small></button><button id="pickup">✋<small>Pick up</small></button><button id="jump">⤴<small>Jump</small></button></div>
+<div id="toast"></div><div id="gmPanel" class="modal hidden"><div><h2>♛ GM PANEL</h2><button data-gm="reward">Max Rewards</button><button data-gm="spawn">Spawn Boss Event</button><input id="announce" placeholder="Announcement"><button id="announceBtn">Broadcast</button><button id="closeGM">Close</button></div></div>
+</div><script src="game.js"></script></body></html>
